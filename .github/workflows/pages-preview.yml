@@ -1,0 +1,63 @@
+name: Development Build QA
+
+on:
+  push:
+    branches:
+      - floot-migration-dev
+    paths:
+      - 'src/**'
+      - 'scripts/**'
+      - 'index.html'
+      - 'package.json'
+      - 'vite.config.ts'
+      - 'postcss.config.js'
+      - 'tailwind.config.js'
+      - 'tsconfig.json'
+      - '.github/workflows/pages-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: atlas-development-build
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout development branch
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Dependency sanity
+        run: npm ls react react-dom three
+
+      - name: Assemble project source
+        run: node scripts/assemble-project.mjs
+
+      - name: Structural regression QA
+        run: node scripts/qa-structure.mjs
+
+      - name: TypeScript QA
+        run: npx tsc --noEmit
+
+      - name: Navigation architecture QA
+        run: node scripts/qa-navigation-architecture.mjs
+
+      - name: Operation state machine QA
+        run: node scripts/qa-operation-state-v1.mjs
+
+      - name: Physics V2 regression QA
+        run: node scripts/qa-physics-v2.mjs
+
+      - name: Production build QA
+        run: npm run build
