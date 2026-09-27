@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Eye, Focus, Gauge, Info, Layers3, Rotate3D, ScanLine, ShieldAlert, Wind, Wrench, X, ZoomIn, ZoomOut } from 'lucide-react';
-import Heater3D from './Heater3D';
+import { ArrowLeft, Eye, Focus, Gauge, Info, Layers3, Rotate3D, ShieldAlert, Wind, Wrench, X, ZoomIn, ZoomOut } from 'lucide-react';
+import Heater3D from './AssetHeater3D';
 import GlobalNavigation from './GlobalNavigation';
 import type { NavigationTarget } from './GlobalNavigation';
 import type { CameraAction, CameraCommand, ContextMode, DraftPressureScenario, DraftStudy } from './modelTypes';
@@ -93,8 +93,8 @@ function cameraForStudy(study: ExtendedDraftStudy): CameraAction {
   if (study === 'damper') return 'draftDamper';
   if (study === 'path') return 'draftPath';
   if (study === 'stack') return 'draftStack';
-  if (study === 'instruments') return 'draftPressure';
-  if (study === 'analyzers') return 'draftStack';
+  if (study === 'instruments') return 'focusComponent';
+  if (study === 'analyzers') return 'focusComponent';
   return 'draftPressure';
 }
 

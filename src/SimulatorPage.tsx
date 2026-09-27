@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ArrowLeft, Eye, Focus, Gauge, Rotate3D, SlidersHorizontal, Wind, ZoomIn, ZoomOut } from 'lucide-react';
-import Heater3D from './Heater3D';
+import Heater3D from './AssetHeater3D';
 import GlobalNavigation from './GlobalNavigation';
 import type { NavigationTarget } from './GlobalNavigation';
 import type { CameraAction, CameraCommand } from './modelTypes';

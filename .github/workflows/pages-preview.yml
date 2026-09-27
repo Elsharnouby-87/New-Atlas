@@ -28,7 +28,7 @@ jobs:
           node-version: 22
 
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
 
       - name: Dependency sanity
         run: npm ls react react-dom three
@@ -50,6 +50,9 @@ jobs:
 
       - name: Physics V2 regression QA
         run: node scripts/qa-physics-v2.mjs
+
+      - name: V13.6 source and rendering contracts
+        run: node scripts/qa-v136.mjs
 
       - name: Production build
         run: npm run build

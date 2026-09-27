@@ -1,0 +1,6 @@
+node_modules/
+dist/
+*.tsbuildinfo
+src/Heater3D.tsx
+tmp/
+public/models/v13.6/Fired_Heater_Atlas_Web_V13_6.glb

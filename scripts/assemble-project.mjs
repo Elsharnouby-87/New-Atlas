@@ -1,4 +1,11 @@
 import fs from 'node:fs';
+import './materialize-master.mjs';
+
+// Historical stages also patch page sources. Restore their untouched inputs so
+// a second assembly is deterministic and never compounds a prior refinement.
+for (const name of ['App.tsx', 'BurnerPage.tsx', 'DraftStackPage.tsx', 'GlobalNavigation.tsx', 'OperationPage.tsx', 'index.css']) {
+  fs.copyFileSync(`src/_migration/source-baseline/${name}${name.endsWith(".tsx") ? ".txt" : ""}`, `src/${name}`);
+}
 
 const heaterParts = [
   'src/_migration/Heater3D.part0.txt',
@@ -22,6 +29,7 @@ const patchStages = [
   './physics-simulator-v2-ui.mjs',
   './navigation-architecture-cleanup.mjs',
   './typescript-cleanup.mjs',
+  './v136-master-integration.mjs',
 ];
 
 for (const file of heaterParts) {

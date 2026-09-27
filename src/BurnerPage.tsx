@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ArrowLeft, Eye, Flame, Focus, Gauge, Info, Layers3, Rotate3D, SlidersHorizontal, Wind, Wrench, X, ZoomIn, ZoomOut } from 'lucide-react';
-import Heater3D from './Heater3D';
+import Heater3D from './AssetHeater3D';
 import GlobalNavigation from './GlobalNavigation';
 import type { NavigationTarget } from './GlobalNavigation';
 import type { BurnerStudy, CameraAction, CameraCommand } from './modelTypes';
 import { combustionTrainingPresets, getCombustionTrainingMetrics } from './combustionTrainingLogic';
 import './burnerTraining.css';
+import './simulatorV1.css';
+import './simulatorV2.css';
 
 type Props = { onBack: () => void; onNavigate: (target: NavigationTarget) => void };
 
@@ -57,7 +59,7 @@ const viewCopy: Record<BurnerStudy, { eyebrow: string; title: string; body: stri
 export default function BurnerPage({ onBack, onNavigate }: Props) {
   const [study, setStudy] = useState<BurnerStudy>('internal');
   const [labels, setLabels] = useState(true);
-  const [flow, setFlow] = useState(true);
+  const [, setFlow] = useState(true);
   const [mobileSheet, setMobileSheet] = useState<'views' | 'details' | null>(null);
   const [mobileSimOpen, setMobileSimOpen] = useState(false);
   const [fuelGasPosition, setFuelGasPosition] = useState(55);
@@ -65,12 +67,14 @@ export default function BurnerPage({ onBack, onNavigate }: Props) {
   const [damperPosition, setDamperPosition] = useState(50);
   const [cameraCommand, setCameraCommand] = useState<CameraCommand>({ id: 1, action: 'burnerInternal', component: 'Burners' });
   const copy = viewCopy[study];
-  const noSelect = useCallback(() => {}, []);
+  const [focusedPart,setFocusedPart]=useState('Burners');
+  const selectPart=useCallback((name:string)=>{if(!name)return;setFocusedPart(name);setCameraCommand(c=>({id:c.id+1,action:'focusComponent',component:name}));},[]);
   const cameraAction = useCallback((action: CameraAction) => setCameraCommand(current => ({ id: current.id + 1, action, component: 'Burners' })), []);
   const controlActive = study === 'external' || study === 'internal';
   const metrics = getCombustionTrainingMetrics(fuelGasPosition, airRegisterPosition, damperPosition);
 
   useEffect(() => {
+    setFocusedPart('Burners');
     if (study === 'external') cameraAction('burnerExternal');
     else if (study === 'internal') cameraAction('burnerInternal');
     else if (study === 'pilot') cameraAction('burnerPilot');
@@ -97,7 +101,7 @@ export default function BurnerPage({ onBack, onNavigate }: Props) {
   const contextMode = study === 'exploded' || study === 'pilot' ? 'isolate' : 'focus';
 
   return (
-    <main className="app-shell burner-page">
+    <main className="app-shell burner-page burner-component-page">
       <header className="atlas-topbar burner-topbar">
         <button className="back-atlas" onClick={onBack}><ArrowLeft size={16} /> Atlas</button>
         <div className="brand-lockup"><strong>FIRED HEATER <em>ATLAS</em></strong><span>COMPONENT STUDY · COMBUSTION SYSTEM</span></div>
@@ -116,9 +120,9 @@ export default function BurnerPage({ onBack, onNavigate }: Props) {
         <div className="burner-viewer hero-viewer">
           <Heater3D
             mode={mode}
-            selected="Burners"
+            selected={focusedPart}
             labels={labels}
-            flow={controlActive ? true : flow}
+            flow={true}
             explode={false}
             contextMode={contextMode}
             damperPosition={damperPosition}
@@ -127,62 +131,65 @@ export default function BurnerPage({ onBack, onNavigate }: Props) {
             burnerControlActive={controlActive}
             burnerStudyMode={study}
             cameraCommand={cameraCommand}
-            onSelect={noSelect}
+            onSelect={selectPart}
           />
           <div className="viewer-kicker burner-kicker"><i /> BURNER 3D STUDY <span>Drag to rotate · Wheel / pinch to zoom</span></div>
           <div className="burner-view-state"><span>{copy.eyebrow}</span><b>{studyViews.find(view => view.id === study)?.title}</b></div>
           <div className="hero-burner-badge"><Flame size={14} /><span><b>HERO BURNER</b> · neighboring burners retained as ghosted location context</span></div>
-          {(controlActive || (flow && study !== 'exploded')) && <div className="burner-flow-legend"><span className="air">Combustion Air</span><span className="fuel">Fuel Gas</span>{study !== 'pilot' && <span className="hot">Hot Products</span>}</div>}
+          <div className="burner-flow-legend">{(study === 'external' || study === 'internal') && <span className="air">Combustion Air</span>}<span className="fuel">{study === 'exploded' ? 'Reference Fuel Path' : study === 'pilot' ? 'Pilot Fuel Path' : 'Fuel Gas'}</span>{(study === 'external' || study === 'internal') && <span className="hot">Hot Products</span>}</div>
           <div className="burner-center-tabs">{studyViews.map(view => <button key={view.id} className={study === view.id ? 'active' : ''} onClick={() => setStudy(view.id)}>{view.title}</button>)}</div>
 
-          {controlActive && <div className={`burner-sim-live ${metrics.state}`}>
-            <span><small>FUEL</small><b>{fuelGasPosition.toFixed(0)}%</b></span>
-            <span><small>AIR REGISTER</small><b>{airRegisterPosition.toFixed(0)}%</b></span>
+          {controlActive && <div className={`burner-sim-live simulator-v2-live ${metrics.state}`}>
+            <span><small>HEAT INPUT</small><b>{metrics.heatInputPctRef}<i>% REF</i></b></span>
+            <span><small>ACTUAL AIR</small><b>{metrics.actualAirPctStoich}<i>% STOICH</i></b></span>
             <span><small>ARCH DRAFT</small><b>{metrics.draftMmH2O > 0 ? '+' : ''}{metrics.draftMmH2O.toFixed(1)} <i>mmH₂O</i></b></span>
-            <span><small>O₂</small><b>{metrics.oxygenPct.toFixed(1)}%</b></span>
+            <span><small>RAD O₂</small><b>{metrics.radiantOxygenPct.toFixed(1)}%</b></span>
+            <span><small>STACK O₂</small><b>{metrics.stackOxygenPct.toFixed(1)}%</b></span>
             <span><small>CO*</small><b>{metrics.coPpm} <i>ppm</i></b></span>
             <em>{metrics.stateLabel}</em>
           </div>}
 
           {controlActive && <div className={`burner-sim-mobile ${mobileSimOpen ? 'open' : ''} ${metrics.state}`}>
-            <button className="burner-sim-mobile-toggle" onClick={() => setMobileSimOpen(value => !value)}><SlidersHorizontal size={15} /><span>{mobileSimOpen ? 'Hide tuning controls' : 'Tune Fuel · Air · Draft'}</span><b>{metrics.oxygenPct.toFixed(1)}% O₂</b></button>
+            <button className="burner-sim-mobile-toggle" onClick={() => setMobileSimOpen(value => !value)}><SlidersHorizontal size={15} /><span>{mobileSimOpen ? 'Hide tuning controls' : 'Tune Fuel · Air · Draft'}</span><span className="burner-sim-mobile-readouts" aria-label="Live simulator readings"><b><small>DRAFT</small>{metrics.draftMmH2O > 0 ? '+' : ''}{metrics.draftMmH2O.toFixed(1)}<i>mmH₂O</i></b><b><small>RAD O₂</small>{metrics.radiantOxygenPct.toFixed(1)}<i>%</i></b><b><small>CO</small>{metrics.coPpm}<i>ppm*</i></b></span></button>
             {mobileSimOpen && <div className="burner-sim-mobile-body">
               <RangeControl label="Fuel gas valve · relative demand" value={fuelGasPosition} onChange={setFuelGasPosition} left="LESS" right="MORE" />
               <RangeControl label="Burner air register" value={airRegisterPosition} onChange={setAirRegisterPosition} left="CLOSED" right="OPEN" />
               <RangeControl label="Stack damper restriction" value={damperPosition} onChange={setDamperPosition} left="OPEN" right="MORE CLOSED" />
-              <div className="burner-sim-preset-row"><button onClick={() => applyPreset('balanced')}>Balanced</button><button onClick={() => applyPreset('airStarved')}>Air-Starved</button><button onClick={() => applyPreset('excessAir')}>Excess Air</button></div>
+              <div className="burner-v2-mobile-metrics" aria-label="Physics simulator outputs"><span><small>HEAT INPUT</small><b>{metrics.heatInputPctRef}% ref</b></span><span><small>ACTUAL AIR</small><b>{metrics.actualAirPctStoich}% stoich</b></span><span><small>EXCESS AIR</small><b>{metrics.excessAirPct}%</b></span><span><small>STACK O₂</small><b>{metrics.stackOxygenPct.toFixed(1)}%</b></span><span><small>STACK T*</small><b>{metrics.stackTemperatureC}°C</b></span><span><small>LAMBDA</small><b>{metrics.lambda.toFixed(2)}</b></span></div>
+              <div className="burner-sim-preset-row sim-v1"><button onClick={() => applyPreset('balanced')}>Balanced</button><button onClick={() => applyPreset('airStarved')}>Air-Starved</button><button onClick={() => applyPreset('fuelRich')}>Fuel-Rich</button><button onClick={() => applyPreset('excessAir')}>Excess Air</button><button onClick={() => applyPreset('draftConcern')}>Draft Concern</button></div><button className="burner-sim-reset" onClick={resetInteraction}><Rotate3D size={13} /> Reset to Balanced</button>
             </div>}
           </div>}
 
-          <div className="control-dock burner-control-dock"><button title="Fit burner study" onClick={() => cameraAction(study === 'external' ? 'burnerExternal' : study === 'pilot' ? 'burnerPilot' : study === 'exploded' ? 'burnerExploded' : 'burnerInternal')}><Focus size={17} /> Fit Burner</button><button onClick={() => cameraAction('zoomIn')}><ZoomIn size={17} /> Zoom +</button><button onClick={() => cameraAction('zoomOut')}><ZoomOut size={17} /> Zoom −</button><button className={labels ? 'active' : ''} onClick={() => setLabels(value => !value)}><Eye size={17} /> Labels</button><button className={controlActive || flow ? 'active' : ''} title={controlActive ? 'Burner flow remains live while the interaction lab is active' : 'Toggle burner flow'} onClick={() => { if (!controlActive) setFlow(value => !value); }}><Wind size={17} /> {controlActive ? 'Flow Live' : 'Flow'}</button><button onClick={() => { cameraAction('reset'); resetInteraction(); }}><Rotate3D size={17} /> Reset</button></div>
+          <div className="control-dock burner-control-dock"><button title="Fit burner study" onClick={() => cameraAction(study === 'external' ? 'burnerExternal' : study === 'pilot' ? 'burnerPilot' : study === 'exploded' ? 'burnerExploded' : 'burnerInternal')}><Focus size={17} /> Fit Burner</button><button onClick={() => cameraAction('zoomIn')}><ZoomIn size={17} /> Zoom +</button><button onClick={() => cameraAction('zoomOut')}><ZoomOut size={17} /> Zoom −</button><button className={labels ? 'active' : ''} onClick={() => setLabels(value => !value)}><Eye size={17} /> Labels</button><button className="active" title={study === 'exploded' ? 'Reference path shows the installed fuel route while the assembly is separated' : study === 'pilot' ? 'Pilot fuel-path teaching cue remains visible in this study' : 'Burner flow remains live in this study'} onClick={() => setFlow(true)}><Wind size={17} /> {study === 'exploded' ? 'Reference Path' : study === 'pilot' ? 'Pilot Fuel Path' : 'Flow Live'}</button><button onClick={() => { cameraAction('reset'); resetInteraction(); }}><Rotate3D size={17} /> Reset</button></div>
           <div className="study-mobile-actions"><button onClick={() => setMobileSheet('views')}><Layers3 size={17} /> Views</button><button onClick={() => setMobileSheet('details')}><Info size={17} /> Details</button></div>
           <div className={`study-mobile-sheet ${mobileSheet ? 'open' : ''}`}>
             <button className="study-mobile-close" onClick={() => setMobileSheet(null)} aria-label="Close mobile study panel"><X size={17} /></button>
-            {mobileSheet === 'views' ? <><span className="sheet-eyebrow">BURNER STUDY VIEWS</span><div className="sheet-view-grid">{studyViews.map(view => <button key={view.id} className={study === view.id ? 'active' : ''} onClick={() => { setStudy(view.id); setMobileSheet(null); }}><strong>{view.title}</strong><small>{view.subtitle}</small></button>)}</div></> : <><span className="sheet-eyebrow">{copy.eyebrow}</span><h3>{copy.title}</h3><p>{copy.body}</p><span className="sheet-subhead">WHAT TO OBSERVE</span><ul>{copy.watch.map(item => <li key={item}>{item}</li>)}</ul>{controlActive && <><span className="sheet-subhead">LIVE TRAINING RESPONSE</span><div className="burner-sheet-metrics"><b>{metrics.draftMmH2O.toFixed(1)} mmH₂O</b><b>O₂ {metrics.oxygenPct.toFixed(1)}%</b><b>CO {metrics.coPpm} ppm*</b></div><p className="sheet-note">Fuel-valve and air-register percentages are relative training commands — not calibrated fuel or air flows.</p></>}{study === 'exploded' && <p className="sheet-note">Exploded view separates functional burner subassemblies while preserving ghosted heater context.</p>}{study === 'pilot' && <p className="sheet-note"><b>Ignition source ≠ pilot flame ≠ flame proving.</b> The micro-view is schematic; actual hardware and acceptance logic vary by OEM / BMS design.</p>}</>}
+            {mobileSheet === 'views' ? <><span className="sheet-eyebrow">BURNER STUDY VIEWS</span><div className="sheet-view-grid">{studyViews.map(view => <button key={view.id} className={study === view.id ? 'active' : ''} onClick={() => { setStudy(view.id); setMobileSheet(null); }}><strong>{view.title}</strong><small>{view.subtitle}</small></button>)}</div></> : <><span className="sheet-eyebrow">{copy.eyebrow}</span><h3>{copy.title}</h3><p>{copy.body}</p><span className="sheet-subhead">WHAT TO OBSERVE</span><ul>{copy.watch.map(item => <li key={item}>{item}</li>)}</ul>{controlActive && <><span className="sheet-subhead">LIVE TRAINING RESPONSE</span><div className="burner-sheet-metrics simulator-v2-sheet"><b>Heat {metrics.heatInputPctRef}% ref</b><b>Air {metrics.actualAirPctStoich}% stoich</b><b>Excess Air {metrics.excessAirPct}%</b><b>Draft {metrics.draftMmH2O > 0 ? '+' : ''}{metrics.draftMmH2O.toFixed(1)} mmH₂O</b><b>Radiant O₂ {metrics.radiantOxygenPct.toFixed(1)}%</b><b>Stack O₂ {metrics.stackOxygenPct.toFixed(1)}%</b><b>CO {metrics.coPpm} ppm*</b><b>Stack T* {metrics.stackTemperatureC}°C</b></div><p className="sheet-note">V2 solves a representative causal loop: draft → burner air → λ → flue-gas flow / temperature → chimney pull + pressure losses → draft. Fuel-valve and register percentages remain commands, not calibrated flows.</p></>}{study === 'exploded' && <p className="sheet-note">Exploded view separates functional burner subassemblies while preserving ghosted heater context.</p>}{study === 'pilot' && <p className="sheet-note"><b>Ignition source ≠ pilot flame ≠ flame proving.</b> The micro-view is schematic; actual hardware and acceptance logic vary by OEM / BMS design.</p>}</>}
           </div>
-          <div className="burner-mobile-summary"><Flame size={17} /><span>{controlActive ? `${metrics.stateLabel} · O₂ ${metrics.oxygenPct.toFixed(1)}%` : copy.title}</span></div>
+          <div className="burner-mobile-summary"><Flame size={17} /><span>{copy.title}</span></div>
         </div>
 
         <aside className="burner-tech">
           <div className="burner-tech-head"><span>{copy.eyebrow}</span><h2>{copy.title}</h2><p>{copy.body}</p></div>
 
           {controlActive && <section className={`burner-tech-section burner-interaction-lab ${metrics.state}`}>
-            <div className="burner-interaction-head"><span>SIMPLIFIED COMBUSTION INTERACTION LAB</span><Gauge size={17} /></div>
+            <div className="burner-interaction-head"><span>PHYSICS-BASED COMBUSTION + DRAFT SIMULATOR V2</span><Gauge size={17} /></div>
             <div className="burner-interaction-state"><b>{metrics.stateLabel}</b><p>{metrics.stateNote}</p></div>
-            <div className="burner-interaction-metrics"><div><small>DRAFT</small><strong>{metrics.draftMmH2O > 0 ? '+' : ''}{metrics.draftMmH2O.toFixed(1)}</strong><em>mmH₂O</em></div><div><small>O₂</small><strong>{metrics.oxygenPct.toFixed(1)}</strong><em>% · {metrics.oxygenLabel}</em></div><div><small>CO*</small><strong>{metrics.coPpm}</strong><em>ppm · {metrics.coLabel}</em></div><div><small>FLAME</small><strong>{metrics.airFuelIndex.toFixed(2)}</strong><em>relative air/fuel index</em></div></div>
+            <div className="burner-interaction-metrics simulator-v2-grid"><div><small>HEAT INPUT</small><strong>{metrics.heatInputPctRef}</strong><em>% of reference</em></div><div><small>ACTUAL AIR</small><strong>{metrics.actualAirPctStoich}</strong><em>% of stoichiometric</em></div><div><small>EXCESS AIR</small><strong>{metrics.excessAirPct}</strong><em>% · λ {metrics.lambda.toFixed(2)}</em></div><div><small>ARCH DRAFT</small><strong>{metrics.draftMmH2O > 0 ? '+' : ''}{metrics.draftMmH2O.toFixed(1)}</strong><em>mmH₂O</em></div><div><small>RADIANT O₂</small><strong>{metrics.radiantOxygenPct.toFixed(1)}</strong><em>% · {metrics.oxygenLabel}</em></div><div><small>STACK O₂</small><strong>{metrics.stackOxygenPct.toFixed(1)}</strong><em>% · tramp-air sensitive</em></div><div><small>CO*</small><strong>{metrics.coPpm}</strong><em>ppm · {metrics.coLabel}</em></div><div><small>STACK T*</small><strong>{metrics.stackTemperatureC}</strong><em>°C · representative</em></div></div><div className="burner-v2-flame-line"><small>FLAME RESPONSE</small><b>{metrics.flameLabel}</b><em>Solver {metrics.converged ? 'converged' : 'bounded'} in {metrics.iterations} iterations · A/F index {metrics.airFuelIndex.toFixed(2)}</em></div>
             <RangeControl label="Fuel gas valve · relative firing demand" value={fuelGasPosition} onChange={setFuelGasPosition} left="LESS" right="MORE" />
             <RangeControl label="Burner air register" value={airRegisterPosition} onChange={setAirRegisterPosition} left="CLOSED" right="OPEN" />
             <RangeControl label="Stack damper restriction" value={damperPosition} onChange={setDamperPosition} left="OPEN" right="MORE CLOSED" />
-            <div className="burner-sim-preset-row desktop"><button onClick={() => applyPreset('balanced')}>Balanced</button><button onClick={() => applyPreset('airStarved')}>Air-Starved</button><button onClick={() => applyPreset('excessAir')}>Excess Air</button><button onClick={() => applyPreset('higherFiring')}>Higher Firing</button></div>
-            <p className="burner-sim-boundary">Three-variable training experiment. Valve % is not fuel flow; register % is not air flow; damper % is not draft. The model teaches direction and coupling only.</p>
+            <div className="burner-sim-preset-row desktop sim-v1"><button onClick={() => applyPreset('balanced')}>Balanced</button><button onClick={() => applyPreset('airStarved')}>Air-Starved</button><button onClick={() => applyPreset('fuelRich')}>Fuel-Rich</button><button onClick={() => applyPreset('excessAir')}>Excess Air</button><button onClick={() => applyPreset('draftConcern')}>Draft Concern</button></div>
+            <button className="burner-sim-reset desktop" onClick={resetInteraction}><Rotate3D size={13} /> Reset to Balanced</button>
+            <p className="burner-sim-boundary"><b>Representative physics-based training model.</b> V2 solves the causal natural-draft loop iteratively. Reference stack height, fuel AFR, stack temperature and the balanced point are transparent calibration assumptions — not plant limits, burner guarantees or a heater heat balance.</p>
           </section>}
 
           <section className="burner-tech-section"><span>WHAT TO OBSERVE</span><ul>{copy.watch.map(item => <li key={item}>{item}</li>)}</ul></section>
-          {study === 'exploded' && <section className="burner-tech-section semantic-explode"><span>SEMANTIC EXPLODED ASSEMBLY</span><div><b>Air Register</b><b>Body / Neck</b><b>Mounting Flange</b><b>Gas Gun / Fuel Tip</b><b>Tile / Throat</b><b>Pilot / Ignition</b><b>Flame</b></div><p>Each assembly separates by function while the neighboring burners remain ghosted for location context.</p></section>}
+          {study === 'exploded' && <section className="burner-tech-section semantic-explode"><span>SEMANTIC EXPLODED ASSEMBLY</span><div><b>Air Register</b><b>Body / Neck</b><b>Mounting Flange</b><b>Gas Gun / Fuel Tip</b><b>Tile / Throat</b><b>Pilot Assembly</b><b>Ignition Electrode</b><b>Flame Proving / Scanner Rod</b><b>Flame</b></div><p>Each assembly separates by function while the neighboring burners remain ghosted for location context.</p></section>}
           {study === 'pilot' && <section className="burner-tech-section pilot-micro-copy"><span>DEDICATED PILOT MICRO-VIEW</span><p><b>Ignition source ≠ pilot flame ≠ flame proving.</b> The 3D view isolates a schematic pilot port, ignition electrode, proving element and pilot flame so the three functions are not confused. Exact geometry and proving technology vary by OEM and BMS design.</p></section>}
           <section className="burner-tech-section"><span>FUNCTION</span><p>The burner introduces fuel and combustion air to establish a controlled flame inside the radiant section. Air admission, fuel-tip condition, burner tile geometry and pilot / ignition reliability all influence stable firing.</p></section>
           <section className="burner-tech-section"><span>OPERATOR / INSPECTION FOCUS</span><ul><li>Flame shape, stability and clearance</li><li>Air-register position and condition</li><li>Fuel-gun / tip cleanliness and damage</li><li>Burner-tile cracking or spalling</li><li>Pilot / ignition / flame-proving reliability</li></ul></section>
-          {controlActive && <section className="burner-tech-section burner-reference-note"><span>REFERENCE-BASED COUPLING</span><p>For natural-draft heaters, the burner air register and stack damper are adjusted together to manage excess O₂ and draft. Reducing air at unchanged stack-damper position can reduce total gas flow / friction loss and make draft more negative; increasing fuel without adequate air drives the training model toward low O₂ and higher CO.</p></section>}
+          {controlActive && <section className="burner-tech-section burner-reference-note"><span>REFERENCE-BASED COUPLING</span><p>For natural-draft heaters, the burner air register and stack damper are adjusted together to manage excess O₂ and draft. Reducing air at unchanged stack-damper position can reduce total gas flow / friction loss and make draft more negative; increasing fuel without adequate air drives O₂ downward and CO upward. Stable operation also depends on acceptable flame pattern and flame-to-tube clearance.</p></section>}
           <section className="burner-warning"><Wrench size={17} /><p><b>Generic training model.</b> Burner internals, pilot arrangement, ignition method, valve characteristics, air-flow curves and permissive logic vary by OEM and site. Use actual drawings, procedures and BMS cause-and-effect for field work.</p></section>
           <div className="burner-path"><span>SYSTEM PATH</span><div>{burnerPath.map((item, index) => <span key={item}>{item}{index < burnerPath.length - 1 && <i>›</i>}</span>)}</div></div>
           {controlActive && <p className="burner-co-footnote">* CO is a representative training cue only. Stack O₂ can also be biased by tramp / leakage air depending on sample location.</p>}

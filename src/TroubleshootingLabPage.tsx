@@ -1,0 +1,29 @@
+import { useEffect, useState } from 'react';
+import { ArrowLeft, Eye, Focus, Layers3, Pause, Play, RotateCcw, SlidersHorizontal, TriangleAlert } from 'lucide-react';
+import GlobalNavigation, { type NavigationTarget } from './GlobalNavigation';
+import AssetHeater3D from './AssetHeater3D';
+import GuidedTroubleshooting from './TroubleshootingPage';
+import { faults } from './v136/faults';
+import type { CameraCommand } from './modelTypes';
+import type { FaultId } from './v136/types';
+export default function TroubleshootingLabPage({onBack,onNavigate}:{onBack:()=>void;onNavigate:(n:NavigationTarget)=>void}){
+ const [fault,setFault]=useState<FaultId>('flameImpingement'),[level,setLevel]=useState(0),[playing,setPlaying]=useState(false),[paused,setPaused]=useState(false),[slow,setSlow]=useState(false),[compare,setCompare]=useState(false),[labels,setLabels]=useState(true),[guided,setGuided]=useState(false),[sheet,setSheet]=useState(false);
+ const [command,setCommand]=useState<CameraCommand>({id:0,action:'radiantFull',component:'Radiant Tubes'});const current=faults.find(f=>f.id===fault)!;
+ useEffect(()=>{if(!playing||paused||level>=1)return;const timer=setTimeout(()=>setLevel(v=>Math.min(1,v+(slow?.012:.035))),100);return()=>clearTimeout(timer);},[playing,paused,slow,level]);
+ const choose=(id:FaultId)=>{const c=faults.find(f=>f.id===id)!;setFault(id);setLevel(0);setPlaying(false);setCompare(false);setCommand(v=>({id:v.id+1,action:id==='pilotFailure'||id==='scannerConcern'?'burnerPilot':id==='convectionFouling'||id==='airLeakage'?'heatOverview':id==='highStackTemperature'?'draftStack':id==='draftPressure'?'fitHeater':id==='tipFouling'?'burnerInternal':'radiantFull',component:c.part}));};
+ if(guided)return <GuidedTroubleshooting onBack={()=>setGuided(false)} onNavigate={onNavigate}/>;
+ return <main className="app-shell fault-lab">
+  <header className="atlas-topbar architecture-topbar"><button className="back-atlas" onClick={onBack}><ArrowLeft size={16}/>Atlas</button><div className="brand-lockup"><strong>FIRED HEATER <em>ATLAS</em></strong><span>EXPLORE · LEARN · UNDERSTAND</span></div><GlobalNavigation active="troubleshooting" onNavigate={onNavigate}/></header>
+  <div className="fault-heading"><div><span>OBSERVE · COMPARE · UNDERSTAND</span><h1>Troubleshooting lab</h1></div><p>Start with a normal heater. Introduce a fault. Follow the physical change.</p><button onClick={()=>setGuided(true)}>Guided walkthroughs</button></div>
+  <div className="fault-gallery" aria-label="Troubleshooting cases">{faults.map((f,i)=><button className={fault===f.id?'active':''} key={f.id} onClick={()=>choose(f.id)}><img src={`${import.meta.env.BASE_URL}media/faults/${f.id}.png`} alt="" loading="lazy"/><span>{String(i+1).padStart(2,'0')}<small>{f.system}</small></span><strong>{f.title}</strong><i className={`fault-preview fault-${f.id}`}/></button>)}</div>
+  <section className="fault-workspace">
+   <div className="fault-viewer hero-viewer">
+    <AssetHeater3D mode="cutaway" selected={current.part} labels={labels} flow explode={false} contextMode="full" damperPosition={18} cameraCommand={command} onSelect={name=>{if(name)setCommand(v=>({id:v.id+1,action:'focusComponent',component:name}));}} fault={fault} faultLevel={level} compareNormal={compare||level===0} paused={paused} speed={slow?.35:1} flowKinds={fault==='lowProcessFlow'||fault==='coking'?['process']:fault==='airLeakage'?['air','tramp','flue']:fault==='pilotFailure'?[]:['flue']} operationState={fault==='pilotFailure'?'pilotIgnition':undefined}/>
+    <div className={`fault-state ${level>0&&!compare?'abnormal':''}`}><span>{level===0||compare?'NORMAL BASELINE':'FAULT INTRODUCED'}</span><h2>{current.title}</h2>{fault==='scannerConcern'&&<b>Flame: visible · Signal: {level>0&&!compare?'NOT PROVEN':'normal teaching reference'}</b>}</div>
+    <div className="fault-timeline"><span>Normal</span><input type="range" aria-label="Fault development" min="0" max="100" value={level*100} onChange={e=>{setLevel(Number(e.target.value)/100);setPlaying(false);}}/><span>Developed fault</span></div>
+    <div className="fault-controls"><button className="primary" onClick={()=>{setLevel(0);setPlaying(true);setPaused(false);setCompare(false);}}><Play size={16}/>Introduce fault</button><button onClick={()=>setPaused(v=>!v)}>{paused?<Play size={16}/>:<Pause size={16}/>} {paused?'Resume':'Pause'}</button><button className={slow?'active':''} onClick={()=>setSlow(v=>!v)}>Slow motion</button><button className={compare?'active':''} onClick={()=>setCompare(v=>!v)}><Layers3 size={16}/>{compare?'Return to fault':'Compare normal'}</button><button onClick={()=>{setLevel(0);setPlaying(false);setCompare(false);}}><RotateCcw size={16}/>Reset</button><button onClick={()=>setLabels(v=>!v)}><Eye size={16}/>Labels</button><button className="fault-mobile-info" onClick={()=>setSheet(v=>!v)}><SlidersHorizontal size={16}/>Observe</button></div>
+   </div>
+   <aside className={`fault-diagnosis ${sheet?'open':''}`}><button className="fault-mobile-close" onClick={()=>setSheet(false)}>Close observations</button><span className="eyebrow">WHAT YOU SEE</span><h2>{current.title}</h2><p>{current.see}</p><section><h3>What is changing</h3><p>{current.change}</p></section><section><h3>Likely contributing causes</h3><ul>{current.causes.map(c=><li key={c}>{c}</li>)}</ul></section><section><h3>What to check / observe</h3><p>{current.check}</p></section><section><h3>Why it matters</h3><p>{current.why}</p></section><section><h3>Related components</h3><div className="fault-related">{current.related.map(name=><button key={name} onClick={()=>setCommand(v=>({id:v.id+1,action:'focusComponent',component:name}))}><Focus size={13}/>{name}</button>)}</div></section><p className="fault-boundary"><TriangleAlert size={15}/>Recognition training. Actual actions and limits follow the approved site / OEM procedure.</p></aside>
+  </section>
+ </main>;
+}

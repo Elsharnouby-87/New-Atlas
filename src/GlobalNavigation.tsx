@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Activity, BookOpen, Boxes, ChevronRight, Menu, Shapes, TriangleAlert, X } from 'lucide-react';
+import { Activity, BookOpen, Boxes, ChevronRight, Gauge, Menu, Shapes, TriangleAlert, X } from 'lucide-react';
 
-export type NavigationTarget = 'atlas' | 'components' | 'heaterTypes' | 'operation' | 'troubleshooting';
+export type NavigationTarget = 'atlas' | 'components' | 'simulator' | 'heaterTypes' | 'operation' | 'troubleshooting';
 
 type Props = {
   active: NavigationTarget;
@@ -13,6 +13,7 @@ type Props = {
 const navigationItems: { id: NavigationTarget; label: string; description: string; available: boolean }[] = [
   { id: 'atlas', label: 'ATLAS', description: 'Master 3D fired-heater reference', available: true },
   { id: 'components', label: 'COMPONENTS', description: 'Detailed equipment study modules', available: true },
+  { id: 'simulator', label: 'SIMULATOR', description: 'Coupled combustion and natural-draft training', available: true },
   { id: 'heaterTypes', label: 'HEATER TYPES', description: 'Box, Cabin and Vertical Cylindrical', available: true },
   { id: 'operation', label: 'OPERATION', description: 'Safety-grounded operating state journey', available: true },
   { id: 'troubleshooting', label: 'TROUBLESHOOTING', description: 'Interactive 3D diagnostic learning', available: true },
@@ -21,6 +22,7 @@ const navigationItems: { id: NavigationTarget; label: string; description: strin
 function NavigationIcon({ target }: { target: NavigationTarget }) {
   if (target === 'atlas') return <BookOpen size={18} />;
   if (target === 'components') return <Boxes size={18} />;
+  if (target === 'simulator') return <Gauge size={18} />;
   if (target === 'heaterTypes') return <Shapes size={18} />;
   if (target === 'operation') return <Activity size={18} />;
   return <TriangleAlert size={18} />;

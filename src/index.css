@@ -890,3 +890,27 @@ button { -webkit-tap-highlight-color: transparent; }
   .trouble-progress span { display: none; }
   .trouble-phase-rail button { flex-basis: 116px; }
 }
+
+
+/* atlas damper live instrument response v09 */
+.atlas-damper-live { display:block; position:absolute; left:50%; transform:translateX(-50%); width:min(470px,calc(100% - 28px)); bottom:86px; z-index:16; padding:10px 12px 9px; border:1px solid rgba(255,122,24,.54); border-radius:12px; background:rgba(3,17,28,.88); backdrop-filter:blur(14px); box-shadow:0 16px 48px rgba(0,0,0,.34); }
+.atlas-damper-live.target{border-color:rgba(77,217,176,.46)}
+.atlas-damper-live.excess{border-color:rgba(255,174,72,.52)}
+.atlas-damper-live.positive{border-color:rgba(255,106,74,.62)}
+.atlas-damper-live-head { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.atlas-damper-live-head span { color:#ff9a55; font-size:8px; font-weight:800; letter-spacing:.13em; }
+.atlas-damper-live-head b { color:#e9f6fb; font-size:9px; text-align:right; }
+.atlas-damper-live-values{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0 5px}.atlas-damper-live-values span{min-width:0;padding:5px 6px;border:1px solid rgba(94,184,214,.18);border-radius:7px;background:rgba(6,28,39,.7)}.atlas-damper-live-values small{display:block;color:#69cfe9;font:700 7px/1 'IBM Plex Mono',monospace;letter-spacing:.08em}.atlas-damper-live-values b{display:block;margin-top:3px;color:#effaff;font-size:9px;white-space:nowrap}.atlas-damper-live-labels { margin:7px 1px 2px; display:flex; justify-content:space-between; color:#96b7c6; font-size:7px; font-weight:800; letter-spacing:.11em; }
+.atlas-damper-live input[type='range'] { width:100%; margin:0; accent-color:#ff7a18; }
+.atlas-damper-clones{position:absolute;left:8px;right:8px;bottom:calc(100% + 8px);display:grid;grid-template-columns:1fr 1fr;gap:7px;pointer-events:none}.atlas-damper-clone{position:relative;padding:8px 9px 7px;border-radius:10px;background:linear-gradient(180deg,rgba(5,25,36,.96),rgba(3,16,24,.93));border:1px solid rgba(103,214,246,.42);box-shadow:0 14px 38px rgba(0,0,0,.35),inset 0 0 22px rgba(83,211,244,.04);opacity:0;transition:opacity .3s ease,transform .45s cubic-bezier(.2,.82,.2,1)}.atlas-damper-clone.pt{transform:translate3d(-30px,-34px,0) scale(.92)}.atlas-damper-clone.o2{transform:translate3d(30px,-52px,0) scale(.92)}.atlas-damper-clones.active .atlas-damper-clone{opacity:1;transform:translate3d(0,0,0) scale(1)}.atlas-damper-clone::before{content:'';position:absolute;left:9px;top:8px;bottom:8px;width:2px;border-radius:2px;background:#6fe1ff;box-shadow:0 0 10px rgba(111,225,255,.62)}.atlas-damper-clone span{display:block;margin-left:8px;color:#75dcfa;font:800 7px/1.1 'IBM Plex Mono',monospace;letter-spacing:.1em}.atlas-damper-clone strong{display:block;margin:4px 0 1px 8px;color:#f5fbff;font-size:18px;line-height:1}.atlas-damper-clone small{display:block;margin-left:8px;color:#8db0bd;font-size:7px;line-height:1.25}.atlas-damper-clone.pt::after,.atlas-damper-clone.o2::after{content:'';position:absolute;top:100%;width:1px;height:12px;background:linear-gradient(rgba(111,225,255,.5),rgba(111,225,255,0))}.atlas-damper-clone.pt::after{left:28px}.atlas-damper-clone.o2::after{right:28px}
+@media (max-width:980px) { .atlas-damper-live { left:14px; right:14px; width:auto; transform:none; bottom:150px; } }
+@media (max-width:520px) { .atlas-damper-live { left:10px; right:10px; bottom:148px; padding:9px 10px 8px; } .atlas-damper-live-head { align-items:flex-start; flex-direction:column; gap:3px; } .atlas-damper-live-head b { font-size:8px; text-align:left; } .atlas-damper-live-values{gap:3px}.atlas-damper-live-values span{padding:4px}.atlas-damper-live-values b{font-size:8px}.atlas-damper-clone strong{font-size:16px}.atlas-damper-clone span,.atlas-damper-clone small{font-size:6px} }
+
+
+/* free explore camera UX v11 */
+.control-dock button:disabled{opacity:.32;cursor:not-allowed;filter:saturate(.45)}
+.context-state.free-explore{border-color:rgba(86,201,255,.34);box-shadow:0 10px 28px rgba(0,0,0,.18),inset 0 0 22px rgba(75,201,255,.035)}
+.context-state.free-explore span{color:#6dd9f7}
+.inspector-panel.free-explore .list-section,.inspector-panel.free-explore .related-section{display:none}
+.inspector-panel.free-explore .inspector-head span{color:#6dd9f7}
+.three-host canvas{touch-action:none;overscroll-behavior:contain}
