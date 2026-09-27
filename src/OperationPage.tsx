@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ArrowLeft, CheckCircle2, ChevronLeft, ChevronRight, CircleDashed, Flame, Focus, Info, Layers3, ShieldAlert, ShieldCheck, Wind, X } from 'lucide-react';
-import Heater3D from './Heater3D';
+import Heater3D from './AssetHeater3D';
 import GlobalNavigation from './GlobalNavigation';
 import type { NavigationTarget } from './GlobalNavigation';
 import type { CameraAction, CameraCommand, OperationState } from './modelTypes';
+import './operationStateMachineV1.css';
 
 type Props = { onBack: () => void; onNavigate: (target: NavigationTarget) => void };
 type MobileSheet = 'states' | 'abnormal' | 'details' | null;
@@ -277,6 +278,23 @@ export default function OperationPage({ onBack, onNavigate }: Props) {
   const purgePathVisible = state === 'purgeActive' || state === 'purgeComplete';
   const hotProductsVisible = firingState && !(shutdownState && shutdownView === 'firingRemoved');
   const flowVisible = processFlowVisible || purgePathVisible || hotProductsVisible;
+  const mainFlameVisible = ['mainBurnerLightOff', 'firingStabilization', 'controlledWarmUp', 'normalOperation', 'loadChange'].includes(state) || (state === 'controlledShutdown' && shutdownView !== 'firingRemoved');
+  const pilotVisualState = state === 'pilotIgnition'
+    ? { label: 'IGNITION CUE', tone: 'caution' }
+    : state === 'pilotProven'
+      ? pilotOutcome === 'normal'
+        ? { label: 'PROVEN CUE', tone: 'live' }
+        : pilotOutcome === 'notEstablished'
+          ? { label: 'NOT ESTABLISHED', tone: 'blocked' }
+          : { label: 'VISIBLE · NOT PROVEN', tone: 'blocked' }
+      : { label: 'NOT SHOWN', tone: 'idle' };
+  const operationVisualStates = [
+    { key: 'process', title: 'PROCESS FLOW', label: processFlowVisible ? 'VISIBLE' : 'NOT SHOWN', tone: processFlowVisible ? 'live' : 'idle' },
+    { key: 'purge', title: 'PURGE CUE', label: state === 'purgeActive' ? 'ACTIVE' : state === 'purgeComplete' ? 'REFERENCE' : 'INACTIVE', tone: state === 'purgeActive' ? 'live' : state === 'purgeComplete' ? 'caution' : 'idle' },
+    { key: 'pilot', title: 'PILOT CUE', label: pilotVisualState.label, tone: pilotVisualState.tone },
+    { key: 'main', title: 'MAIN FLAME', label: mainFlameVisible ? 'VISIBLE' : 'ABSENT IN 3D', tone: mainFlameVisible ? 'live' : 'idle' },
+    { key: 'hotgas', title: 'HOT GAS', label: hotProductsVisible ? 'VISIBLE' : 'NOT SHOWN', tone: hotProductsVisible ? 'live' : 'idle' },
+  ];
   const operationFocus = state === 'readiness' ? activeZone : state === 'purgeReady' ? activePurgeTopic : state === 'processReady' ? 'process' : state === 'purgeActive' ? 'purgeActive' : state === 'purgeComplete' ? 'purgeComplete' : state === 'pilotIgnition' ? 'pilotIgnition' : state === 'pilotProven' ? (pilotOutcome === 'notEstablished' ? 'pilotNotEstablished' : pilotOutcome === 'notProven' ? 'pilotNotProven' : 'pilotProven') : state === 'mainBurnerLightOff' ? 'mainBurnerLightOff' : state === 'firingStabilization' ? (firingOutcome === 'unstable' ? 'firingUnstable' : firingOutcome === 'impingement' ? 'firingImpingement' : firingOutcome === 'draftAbnormal' ? 'firingDraftAbnormal' : 'firingStable') : state === 'controlledWarmUp' ? (warmupView === 'early' ? 'warmupEarly' : warmupView === 'developing' ? 'warmupDeveloping' : warmupView === 'uneven' ? 'warmupUneven' : 'warmupBalanced') : state === 'normalOperation' ? `normal${activeNormalTopic.charAt(0).toUpperCase()}${activeNormalTopic.slice(1)}` : state === 'loadChange' ? (loadChangeView === 'increase' ? 'loadIncrease' : loadChangeView === 'decrease' ? 'loadDecrease' : loadChangeView === 'notStabilized' ? 'loadNotStabilized' : 'loadSteady') : state === 'controlledShutdown' ? (shutdownView === 'reducedHeatInput' ? 'shutdownReduced' : shutdownView === 'firingRemoved' ? 'shutdownFiringRemoved' : shutdownView === 'responseConcern' ? 'shutdownConcern' : 'shutdownStable') : state === 'coolDownNonFiring' ? (cooldownView === 'coolingProgress' ? 'cooldownProgress' : cooldownView === 'nonFiringState' ? 'cooldownNonFiring' : cooldownView === 'unevenCooling' ? 'cooldownUneven' : 'cooldownResidual') : 'overview';
   const abnormalScenario = abnormalScenarios.find(item => item.id === abnormalScenarioId) ?? abnormalScenarios[0];
   const abnormalMessage = abnormalScenario[abnormalPhase];
@@ -619,6 +637,7 @@ export default function OperationPage({ onBack, onNavigate }: Props) {
         <div className="radiant-viewer operation-viewer hero-viewer">
           <Heater3D mode="cutaway" selected={effectiveSelected} labels flow={effectiveFlowVisible} explode={false} contextMode={effectiveContextMode} damperPosition={18} burnerStudyMode={effectiveBurnerStudyMode} radiantStudyMode={abnormalRadiantStudyMode} radiantScenario={abnormalRadiantScenario} draftStudyMode={abnormalDraftStudyMode} draftPressureScenario={abnormalDraftPressureScenario} operationState={effectiveOperationState} operationFocus={effectiveOperationFocus} cameraCommand={cameraCommand} onSelect={noSelect} />
           <div className="viewer-kicker operation-kicker"><i /> OPERATION 3D <span>Training state visualization · Drag to rotate · Wheel / pinch to zoom</span></div>
+          {!abnormalLabOpen && <div className="operation-system-strip" aria-label="3D visual system state">{operationVisualStates.map(item => <span key={item.key} className={item.tone}><small>{item.title}</small><b>{item.label}</b></span>)}</div>}
           <div className="radiant-view-state operation-view-state"><span>{copy.code} · CURRENT TRAINING STATE</span><b>{copy.title}</b></div>
 
           {!abnormalLabOpen ? <div className="radiant-center-tabs operation-center-tabs">
@@ -636,6 +655,7 @@ export default function OperationPage({ onBack, onNavigate }: Props) {
           {!abnormalLabOpen && state === 'firingStabilization' && <div className={`operation-zone-badge firing ${firingOutcome === 'stable' ? 'proven' : 'blocked'}`}><b>{firingOutcome === 'stable' ? 'STABLE FIRING · TRAINING ACCEPTED' : 'BLOCKED · DO NOT PROGRESS'}</b><span>{firingOutcome === 'unstable' ? 'Flame stability is not accepted.' : firingOutcome === 'impingement' ? 'A representative flame approaches the tube zone to illustrate impingement concern.' : firingOutcome === 'draftAbnormal' ? 'Draft condition is represented as abnormal; no target or damper action is provided.' : 'Flame pattern, scanner concept, draft awareness and tube clearance are shown as monitoring concepts.'}</span></div>}
           {!abnormalLabOpen && state === 'controlledWarmUp' && <div className={`operation-zone-badge firing ${warmupView === 'uneven' ? 'blocked' : 'proven'}`}><b>{warmupView === 'uneven' ? 'THERMAL RESPONSE CONCERN · BLOCKED' : 'CONTROLLED WARM-UP · QUALITATIVE THERMAL VIEW'}</b><span>{warmupView === 'early' ? 'Early thermal response: heat glow is intentionally limited and qualitative.' : warmupView === 'developing' ? 'Developing response: the model increases thermal glow without implying a time or temperature rate.' : warmupView === 'balanced' ? 'Balanced response: the model shows a more even qualitative thermal condition.' : 'Uneven response: asymmetric heat cues illustrate a condition that requires real procedure-based evaluation.'}</span></div>}
           {!abnormalLabOpen && state === 'normalOperation' && <div className="operation-zone-badge firing proven"><b>{normalTopic.title}</b><span>{normalTopic.body}</span></div>}
+          {!abnormalLabOpen && state === 'normalOperation' && <button className="operation-simulator-cta" onClick={() => onNavigate('simulator')}><span><small>NEXT LEARNING TOOL</small> Combustion & Draft Simulator</span><ChevronRight size={15} /></button>}
           {!abnormalLabOpen && state === 'loadChange' && <div className={`operation-zone-badge firing ${loadChangeView === 'notStabilized' ? 'blocked' : 'proven'}`}><b>{loadChangeView === 'notStabilized' ? 'RESPONSE NOT STABILIZED · BLOCKED' : loadChangeView === 'increase' ? 'HIGHER HEAT DEMAND · QUALITATIVE' : loadChangeView === 'decrease' ? 'LOWER HEAT DEMAND · QUALITATIVE' : 'STABLE BASELINE'}</b><span>{loadChangeView === 'increase' ? 'Heat-input response is shown increasing qualitatively while the same monitoring responsibilities remain active.' : loadChangeView === 'decrease' ? 'Heat-input response is shown decreasing qualitatively while flame and process stability remain monitored.' : loadChangeView === 'notStabilized' ? 'The visual response remains unsettled; no corrective control action is prescribed.' : 'Reference condition before studying a change in process heat demand.'}</span></div>}
           {!abnormalLabOpen && state === 'controlledShutdown' && <div className={`operation-zone-badge firing ${shutdownView === 'responseConcern' ? 'blocked' : 'proven'}`}><b>{shutdownView === 'responseConcern' ? 'SHUTDOWN RESPONSE CONCERN · BLOCKED' : shutdownView === 'firingRemoved' ? 'FIRING REMOVED CONCEPT' : shutdownView === 'reducedHeatInput' ? 'REDUCED HEAT INPUT · QUALITATIVE' : 'STABLE SHUTDOWN ENTRY'}</b><span>{shutdownView === 'stableEntry' ? 'Stable operating reference before the shutdown learning sequence begins.' : shutdownView === 'reducedHeatInput' ? 'Flame and heat cues reduce qualitatively without implying a rate, target or burner sequence.' : shutdownView === 'firingRemoved' ? 'Main flames are absent in this training view; actual fuel isolation and shutdown completion criteria are not asserted.' : 'Thermal / firing response is shown unsettled; approved site procedure governs evaluation and response.'}</span></div>}
           {!abnormalLabOpen && state === 'coolDownNonFiring' && <div className={`operation-zone-badge firing ${cooldownView === 'unevenCooling' ? 'blocked' : 'proven'}`}><b>{cooldownView === 'unevenCooling' ? 'UNEQUAL RESIDUAL-HEAT CONCERN' : cooldownView === 'nonFiringState' ? 'NON-FIRING · NOT MAINTENANCE RELEASE' : cooldownView === 'coolingProgress' ? 'COOLING PROGRESSION · QUALITATIVE' : 'RESIDUAL HEAT PRESENT'}</b><span>{cooldownView === 'residualHeat' ? 'Combustion is absent while residual heat remains visible in the heater.' : cooldownView === 'coolingProgress' ? 'Thermal glow reduces qualitatively without representing elapsed time or a temperature target.' : cooldownView === 'nonFiringState' ? 'The heater is non-firing, but this does not establish cool, isolated, gas-free or work-ready status.' : 'Asymmetric residual heat is shown as a procedure-review concern; no corrective action is prescribed.'}</span></div>}
@@ -657,7 +677,7 @@ export default function OperationPage({ onBack, onNavigate }: Props) {
 
         <aside className="radiant-tech operation-tech">
           {abnormalLabOpen ? renderAbnormalDetails() : <><div className="radiant-tech-head operation-tech-head"><span>{copy.code} · OPERATION TRAINING STATE</span><h2>{copy.title}</h2><p>{copy.purpose}</p></div>
-          <section className="radiant-tech-section"><span>WHAT CHANGES</span><ul>{copy.changes.map(item => <li key={item}>{item}</li>)}</ul></section>
+          <section className="radiant-tech-section operation-right-changes"><span>WHAT CHANGES</span><ul>{copy.changes.map(item => <li key={item}>{item}</li>)}</ul></section>
           <section className="radiant-tech-section"><span>OPERATOR OBSERVES</span><ul>{copy.observe.map(item => <li key={item}>{item}</li>)}</ul></section>
           <section className="radiant-tech-section"><span>WHY THIS STATE EXISTS</span><p>{copy.why}</p></section>
           {state === 'readiness' && <section className="radiant-tech-section operation-zone-detail"><span>CURRENT WALKDOWN ZONE</span><h3>{zone.title}</h3><p>{zone.body}</p><small>VIEWED means this training topic was opened. It does not mean field readiness has been verified.</small></section>}

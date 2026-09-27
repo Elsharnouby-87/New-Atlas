@@ -1,0 +1,57 @@
+FIRED HEATER ATLAS — V13.6 WEB FIDELITY EXPORT REPORT
+============================================================================
+Generated: 2026-09-12T03:59:12
+Blender version: 5.2.1 LTS
+Blend file: [UNSAVED BLENDER SCENE]
+
+GLB: C:\Users\AHMED EL-SHARNOUBY\Downloads\Fired_Heater_Atlas_Web_V13_6.glb
+Manifest: C:\Users\AHMED EL-SHARNOUBY\Downloads\Fired_Heater_Atlas_Web_V13_6_manifest.json
+Scene profile: C:\Users\AHMED EL-SHARNOUBY\Downloads\Fired_Heater_Atlas_Web_V13_6_scene_profile.json
+
+Geometry exported: 1067
+Curves converted to web meshes: 11
+Cameras serialized: 24
+Lights serialized: 18
+Materials serialized: 45
+Preferred home camera: Camera_StartupFullHeater_V10_4_2
+
+Geometry by system:
+  - Bridgewall Instrumentation: 2
+  - Burner Instrumentation: 32
+  - Burner System: 70
+  - Convection Section: 64
+  - Draft & Flue Gas: 10
+  - Firebox Instrumentation: 2
+  - Process Coil: 4
+  - Radiant Section: 39
+  - Shield Section: 16
+  - Stack Instrumentation: 28
+  - Structure: 15
+  - Tube Skin Monitoring: 14
+  - burner_system: 56
+  - convection_section: 401
+  - fuel_gas_bms: 135
+  - instrumentation: 2
+  - piping_headers: 16
+  - purge_air_system: 31
+  - radiant_section: 16
+  - shield_section: 2
+  - stack_breeching: 39
+  - structure_access: 73
+
+glTF exporter result: {'FINISHED'}
+Export error: None
+
+V12 fidelity data included:
+  - Blender cameras and camera transforms
+  - All Blender lights in scene_profile.json
+  - World/background settings
+  - Blender color management settings
+  - Procedural material recipes for refractory/flames/ghost stack
+  - Per-object material names and web semantic metadata
+  - External/Cutaway/X-Ray visibility flags
+
+Website implementation note:
+  Use the GLB for geometry/PBR materials.
+  Use scene_profile.json to reconstruct Blender AREA lights and
+  procedural refractory/flame materials in Three.js.

@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { catalog, componentSlug } from './v136/semantics';
 import { ArrowLeft, ArrowRight, Boxes, Flame, Layers3, Thermometer, Wind } from 'lucide-react';
 import GlobalNavigation from './GlobalNavigation';
 import type { NavigationTarget } from './GlobalNavigation';
@@ -8,6 +10,7 @@ type Props = {
   onBack: () => void;
   onNavigate: (target: NavigationTarget) => void;
   onOpenModule: (module: ComponentModuleId) => void;
+  onSelectComponent: (name:string) => void;
 };
 
 const modules: { id: ComponentModuleId; eyebrow: string; title: string; description: string; path: string }[] = [
@@ -48,7 +51,10 @@ function ModuleIcon({ id }: { id: ComponentModuleId }) {
   return <Wind size={23} />;
 }
 
-export default function ComponentsPage({ onBack, onNavigate, onOpenModule }: Props) {
+export default function ComponentsPage({ onBack, onNavigate, onOpenModule, onSelectComponent }: Props) {
+  const [filter,setFilter]=useState('All systems'),[query,setQuery]=useState('');
+  const visible=catalog.filter(c=>(filter==='All systems'||c.system===filter)&&`${c.name} ${c.what}`.toLowerCase().includes(query.toLowerCase()));
+
   return (
     <main className="app-shell architecture-page components-hub-page">
       <header className="atlas-topbar architecture-topbar">
@@ -59,13 +65,13 @@ export default function ComponentsPage({ onBack, onNavigate, onOpenModule }: Pro
 
       <section className="architecture-contextbar">
         <div><span>COMPONENT STUDIES</span><strong>Move from whole-heater location context into dedicated system learning</strong></div>
-        <p>Four detailed modules available now · More component studies can be added without changing the Atlas</p>
+        <p>25 component topics · Four detailed system studies</p>
       </section>
 
       <section className="components-hub-content">
         <div className="components-hub-intro">
           <span><Boxes size={16} /> COMPONENTS</span>
-          <h1>Choose the system you want to study in depth.</h1>
+          <h1>Know the equipment. See the connections.</h1>
           <p>The Atlas answers <b>where it is</b>. These modules answer <b>how it is built, what it does, what to observe and what can go wrong</b>.</p>
         </div>
 
@@ -73,7 +79,7 @@ export default function ComponentsPage({ onBack, onNavigate, onOpenModule }: Pro
           {modules.map((module, index) => (
             <button key={module.id} className={`component-module-card module-${module.id}`} onClick={() => onOpenModule(module.id)}>
               <div className="component-module-number">0{index + 1}</div>
-              <div className="component-module-icon"><ModuleIcon id={module.id} /></div>
+              <img className="component-thumbnail" src={`${import.meta.env.BASE_URL}media/components/${module.id}.png`} alt={`${module.title} from the interactive V13.6 model`} /><div className="component-module-icon"><ModuleIcon id={module.id} /></div>
               <span>{module.eyebrow}</span>
               <h2>{module.title}</h2>
               <p>{module.description}</p>
@@ -83,6 +89,11 @@ export default function ComponentsPage({ onBack, onNavigate, onOpenModule }: Pro
           ))}
         </div>
 
+        <section className="component-catalog">
+          <div className="catalog-heading"><div><span>COMPONENT LIBRARY</span><h2>Explore each part</h2></div><input aria-label="Find a component" placeholder="Find a component…" value={query} onChange={e=>setQuery(e.target.value)}/><select aria-label="Filter component system" value={filter} onChange={e=>setFilter(e.target.value)}><option>All systems</option>{[...new Set(catalog.map(c=>c.system))].map(s=><option key={s}>{s}</option>)}</select></div>
+          <div className="catalog-grid">{visible.map((c)=><button key={c.name} onClick={()=>onSelectComponent(c.name)}><img loading="lazy" src={`${import.meta.env.BASE_URL}media/components/${componentSlug(c.name)}.png`} alt=""/><div><small>{c.system}</small><h3>{c.name}</h3><p>{c.what}</p><span>Locate in 3D <ArrowRight size={14}/></span></div></button>)}</div>
+          {visible.length===0&&<p>No matching component. Try another name or system.</p>}
+        </section>
         <div className="components-hub-note">
           <b>Architecture rule</b>
           <span>Component pages stay focused on anatomy, function, inspection and local behaviour. Cross-system combustion / draft interaction lives in the separate Simulator tab.</span>
