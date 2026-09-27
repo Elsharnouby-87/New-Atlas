@@ -17,6 +17,7 @@ Validated on 27 September 2026 against the preserved production baseline `06c2be
 Chromium 153 using a software WebGL renderer. Viewports: 1440×1000, 1024×768, 390×844 and 412×915. Mobile dimensions are emulation; native Safari, Edge and physical mobile GPUs were not available for this validation. Reduced-motion mode was used for deterministic captures.
 
 - Atlas, whole-heater explode/reassemble, detailed burner, component gallery, operation and troubleshooting navigation rendered successfully.
+- A final navigation check found that the active COMPONENTS highlight prevented returning from a system study to the hub. The final integration stage now permits that navigation. All four system studies were opened and returned to the 25-card component hub in browser verification; the gallery evidence was recaptured.
 - The normal O-00 to O-14 journey was driven through its UI gates. Purge showed process/purge flow with no pilot or main flame. A failed pilot blocked progression. First main light-off showed one burner (three flame layers); normal operation showed all four burners (12 layers). Firing removal and cooldown showed zero main flames, with residual heat retained during cooldown.
 - Stack-damper extremes matched both the training readout and actual blade transform: 79° more open, 10° more closed.
 - All six flow layers could be selected and were reflected in the renderer state.
@@ -50,3 +51,7 @@ All supplied geometry metadata, technical documents and design references were a
 Separate tube-support geometry and validated cross-bank process connections are not identified in the supplied source. The application states the support limitation and does not fabricate connecting pipework. The 17 source BMS-only paths retain their default hidden state. Source procedural flame and brick recipes are reconstructed at runtime; profile area lighting is approximated with browser lights. Motion, deposits, temperatures, draft and flow cues remain qualitative training representations, not OEM kinematics or CFD.
 
 Native device performance benchmarking, geometry LOD derivatives and optional audio are deferred. Desktop and mobile currently load the same complete source geometry, with a progress/retry interface and lower mobile pixel/frame budgets. The master remains available for later measured optimization.
+
+## Publication
+
+The initial integration was merged through PR #1 as `1ab0fca788f47f482a945cb1c350048ab04e6c69`. GitHub Actions run [36356028536](https://github.com/Elsharnouby-87/New-Atlas/actions/runs/36356028536) passed every build, regression and deployment step. The live Pages GLB was downloaded and verified against the original SHA-256 and exact byte count. The component-navigation correction is delivered as a separate follow-up with browser and build verification.

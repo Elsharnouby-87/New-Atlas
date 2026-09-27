@@ -41,3 +41,9 @@ burner=burner.replace("const noSelect = useCallback(() => {}, []);", "const [foc
 burner=burner.replace('selected="Burners"','selected={focusedPart}').replace('onSelect={noSelect}','onSelect={selectPart}');
 burner=burner.replace("if (study === 'external') cameraAction", "setFocusedPart('Burners');\n    if (study === 'external') cameraAction");
 fs.writeFileSync('src/BurnerPage.tsx',burner);
+
+// A study shares the COMPONENTS highlight with its parent hub; the highlighted
+// global destination must still navigate back to that hub.
+let navigation=fs.readFileSync('src/GlobalNavigation.tsx','utf8');
+navigation=navigation.replace('if (target !== active) onNavigate(target);','onNavigate(target);');
+fs.writeFileSync('src/GlobalNavigation.tsx',navigation);
