@@ -45,7 +45,7 @@ export default function GlobalNavigation({ active, onNavigate, className = '' }:
   const activate = (target: NavigationTarget, available: boolean) => {
     if (!available) return;
     setMobileOpen(false);
-    if (target !== active) onNavigate(target);
+    onNavigate(target);
   };
 
   const mobileNavigation = createPortal(
